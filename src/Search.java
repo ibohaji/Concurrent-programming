@@ -1,8 +1,11 @@
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Search {
 
@@ -219,12 +222,22 @@ public class Search {
              * Run search using multiple tasks
              *********************************************/
 
-/*+++++++++ Uncomment for Problem 2+
 
             // Create list of tasks
             List<SearchTask> taskList = new ArrayList<SearchTask>();
 
             // TODO: Add tasks to list here
+            //Divide the length of the len into nthreads, e.g. partition to n tasks
+            //
+            int[] partitions = getPartitions();
+
+            // Creating tasks with the calculated partitions
+            int s = 0;
+            for(int i = 0;i<nthreads;i++){
+                int end = s + partitions[i];
+                taskList.set(i,new SearchTask(text,pattern,s,end));
+                s = end;
+            }
 
             List<Integer> result = null;
 
@@ -247,6 +260,13 @@ public class Search {
 
                 // TODO: Combine future results into an overall result
 
+                for(Future<List<Integer>> future:futures){
+                    for(int i = 0 ; i<runs;i++){
+                        result.add(future.get().get(i));
+
+                    }
+                }
+
                 time = (double) (System.nanoTime() - start) / 1e9;
                 totalTime += time;
 
@@ -264,7 +284,6 @@ public class Search {
             }
             System.out.printf("\n\nAverage speedup: %1.2f\n\n", singleTime / multiTime);
 
-++++++++++*/
 
             /**********************************************
              * Terminate engine after use
@@ -274,5 +293,20 @@ public class Search {
         } catch (Exception e) {
             System.out.println("Search: " + e);
         }
+    }
+
+    private static int[] getPartitions() {
+        int[] partitions = new int[nthreads];
+        int quotient = len / nthreads;
+        int remainder = len % nthreads;
+
+        for (int i = 0; i < nthreads; i++) {
+            partitions[i] = quotient;
+            if (remainder > 0) {
+                partitions[i]++;
+                remainder--;
+            }
+        }
+        return partitions;
     }
 }
