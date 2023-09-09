@@ -123,7 +123,7 @@ public class Search {
         }
     }
 
-    static void writeResult(List<Integer> res) {
+    static void writeResult(List<Integer> res) throws IOException {
         System.out.print("" + res.size() + " occurrences found in ");
         if (printPos) {
             int i = 0;
@@ -135,7 +135,10 @@ public class Search {
             }
             System.out.println();
         }
+
+
     }
+
 
     static void writeTime(double time) {
         System.out.printf("%1.6f s", time);
