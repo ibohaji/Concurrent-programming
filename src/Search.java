@@ -238,20 +238,21 @@ public class Search {
             int s = 0;
             for(int i = 0;i<ntasks;i++){
                 int end = s + partitions[i];
+                while(0<pattern.length && text[end] == pattern[0]){
+                    end++;
+
+                }
                 taskList.add(new SearchTask(text,pattern,s,end));
-                System.out.println("start: " + s + " end " + end);
-                s = end;
+                s = end ;
             }
 
             List<Integer> result = null;
-
             // Run the tasks a couple of times
             for (int i = 0; i < warmups; i++) {
                 engine.invokeAll(taskList);
             }
-
             totalTime = 0.0;
-
+            int tst = 0;
             for (int run = 0; run < runs; run++) {
 
                 start = System.nanoTime();
@@ -261,8 +262,7 @@ public class Search {
 
                 // Overall result is an ordered list of unique occurrence positions
                 result = new LinkedList<Integer>();
-                int sum = 0;
-                List<Integer> current = new ArrayList<>();
+
                 // TODO: Combine future results into an overall result
 
                 Set<Integer> uniqueElements = new HashSet<>();
@@ -270,17 +270,14 @@ public class Search {
                 for (Future<List<Integer>> future : futures) {
                     try {
                         List<Integer> taskResult = future.get(); // Wait for the task to complete and get its result
-                        for (Integer value : taskResult) {
-                            // Check if the value is unique before adding it to the result
-                            if (uniqueElements.add(value)) {
-                                result.add(value);
-                            }
-                        }
+                        System.out.println("Size of taskResult " + taskResult.size());
+                        result.addAll(taskResult);
                     } catch (InterruptedException | ExecutionException e) {
-                        // Handle exceptions as needed
+                        // Handle exceptions
                         e.printStackTrace();
                     }
                 }
+
 
 
                 time = (double) (System.nanoTime() - start) / 1e9;
@@ -309,6 +306,11 @@ public class Search {
         } catch (Exception e) {
             System.out.println("Search: " + e);
         }
+    }
+
+    public static boolean isPatternBoundary(char c) {
+        // Compare the character 'c' to a space character using single quotes
+        return c == ' ';
     }
 
     private static int[] getPartitions() {
