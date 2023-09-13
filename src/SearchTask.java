@@ -24,6 +24,7 @@ class SearchTask implements Callable<List<Integer>> {
      * Create a task for searching occurrences of 'pattern' in the substring
      * text[from..(to-1)]
      */
+
     public SearchTask(char[] text, char[] pattern, int from, int to) {
         this.text = text;
         this.pattern = pattern;
