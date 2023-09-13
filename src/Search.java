@@ -1,8 +1,6 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -231,11 +229,15 @@ public class Search {
             //
             int[] partitions = getPartitions();
 
+            for(int i = 0 ; i<partitions.length;i++){
+                System.out.println("partition " + " " +  i + " " + partitions[i]);
+            }
             // Creating tasks with the calculated partitions
             int s = 0;
-            for(int i = 0;i<nthreads;i++){
+            for(int i = 0;i<ntasks;i++){
                 int end = s + partitions[i];
-                taskList.set(i,new SearchTask(text,pattern,s,end));
+                taskList.add(new SearchTask(text,pattern,s,end));
+                System.out.println("start: " + s + " end " + end);
                 s = end;
             }
 
@@ -257,15 +259,27 @@ public class Search {
 
                 // Overall result is an ordered list of unique occurrence positions
                 result = new LinkedList<Integer>();
-
+                int sum = 0;
+                List<Integer> current = new ArrayList<>();
                 // TODO: Combine future results into an overall result
 
-                for(Future<List<Integer>> future:futures){
-                    for(int i = 0 ; i<runs;i++){
-                        result.add(future.get().get(i));
+                Set<Integer> uniqueElements = new HashSet<>();
 
+                for (Future<List<Integer>> future : futures) {
+                    try {
+                        List<Integer> taskResult = future.get(); // Wait for the task to complete and get its result
+                        for (Integer value : taskResult) {
+                            // Check if the value is unique before adding it to the result
+                            if (uniqueElements.add(value)) {
+                                result.add(value);
+                            }
+                        }
+                    } catch (InterruptedException | ExecutionException e) {
+                        // Handle exceptions as needed
+                        e.printStackTrace();
                     }
                 }
+
 
                 time = (double) (System.nanoTime() - start) / 1e9;
                 totalTime += time;
@@ -296,11 +310,11 @@ public class Search {
     }
 
     private static int[] getPartitions() {
-        int[] partitions = new int[nthreads];
-        int quotient = len / nthreads;
-        int remainder = len % nthreads;
+        int[] partitions = new int[ntasks];
+        int quotient = len / ntasks;
+        int remainder = len % ntasks;
 
-        for (int i = 0; i < nthreads; i++) {
+        for (int i = 0; i < ntasks; i++) {
             partitions[i] = quotient;
             if (remainder > 0) {
                 partitions[i]++;
